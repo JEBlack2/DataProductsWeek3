@@ -1,0 +1,63 @@
+---
+title: "Where Shall We Retire ?"
+author: "J.E.Black"
+date: "December 4, 2016"
+output: ioslides_presentation
+---
+
+---
+## Background
+
+* As of 2014, about 4 million people retire every year.
+* Some states are more "Retirement Friendly" than others.
+* In Mar 2015, "BankRate" published a "First to Worst" survey, ranking states according to:
+    + Cost of Living
+    + Crime Rate
+    + Health Care Quality
+    + Weather
+    + Well-being
+* According to the BankRate survey, 60% of retirees will move when they retire.
+
+## Obtaining the Data
+
+* We "scraped" the "First to Worst" data from the "BankRate" website at: 
+"http://www.bankrate.com/finance/retirement/best-places-retire-how-state-ranks.aspx""
+
+* After minor data cleanup, and adding the standard Postal Code State Abbreviations, 
+we were ready to visualize the data.
+
+* We loaded the required libraries as needed: 
+```{r setup, echo=TRUE, message=FALSE}
+if (!require("plotly")) install.packages("plotly")
+library(plotly)
+if (!require("webshot")) install.packages("webshot")
+library(webshot)
+```
+
+## Test Slide Two Do the Data
+
+```{r doData}
+# Create data frame
+state_pop <- data.frame(State = state.abb, Pop = as.vector(state.x77[,1]))
+# Create hover text
+state_pop$hover <- with(state_pop, paste(State,'<br>', "Population:", Pop))
+# Make state borders black
+borders <- list(color = toRGB("black"), width=2)
+# Set up some mapping options
+map_options <- list(
+  scope = 'usa',
+  projection = list(type = 'albers usa'),
+  showlakes = TRUE,
+  lakecolor = toRGB('black')
+)
+```
+
+## Test Slide Three with Plot
+
+```{r plotData}
+plotly::plot_ly(state_pop, z = state_pop$Pop, text = state_pop$hover, locations = state_pop$State, type = 'choropleth', locationmode = 'USA-states', color = state_pop$Pop, colors = 'Blues', marker = list(line = borders)) %>%
+  colorbar(title = "Population") %>%
+  layout(title = 'US Population in 1975<br>(Hover for Details)', geo = map_options)
+```
+
+
