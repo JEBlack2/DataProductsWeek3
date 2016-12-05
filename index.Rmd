@@ -5,7 +5,6 @@ date: "December 4, 2016"
 output: ioslides_presentation
 ---
 
----
 ## Background
 
 * As of 2014, about 4 million people retire every year.
@@ -15,7 +14,7 @@ output: ioslides_presentation
     + Crime Rate
     + Health Care Quality
     + Weather
-    + Well-being
+    + Community Well-being
 * According to the BankRate survey, 60% of retirees will move when they retire.
 
 ## Obtaining the Data
@@ -32,32 +31,61 @@ if (!require("plotly")) install.packages("plotly")
 library(plotly)
 if (!require("webshot")) install.packages("webshot")
 library(webshot)
+if (!require("xlsx")) install.packages("xlsx")
+library("xlsx")
 ```
 
-## Test Slide Two Do the Data
+## Load the BankRate Data
 
-```{r doData}
-# Create data frame
-state_pop <- data.frame(State = state.abb, Pop = as.vector(state.x77[,1]))
+```{r getData, echo=FALSE}
+brFileName <- "2015.03.BankRateSurvey.xlsx"
+if (!file.exists(brFileName)) stop ("Data File is Missing")
+brData <- read.xlsx(brFileName, sheetIndex = 1, header = TRUE)
+brSiz <- dim(brData)
+brData$Overall.rank <- as.vector(brData$Overall.rank)
+```
+* We loaded the `r brSiz[1]` row x `r brSiz[2]` column data frame from `r brFileName`
+* The data column headers are: `r names(brData)`
+    * Each column contains a "First to Worst" ranking for that category; low numbers are good;
+    * The "Overall" ranking is according to BankRate's weighting criteria; a future version will support custom criteria.
+
+```{r doData, echo=FALSE}
 # Create hover text
-state_pop$hover <- with(state_pop, paste(State,'<br>', "Population:", Pop))
+brData$hover <- with(brData, paste(state.name,
+                                   '<br>', "Overall Rank: ", Overall.Rank,
+                                   '<br>', "Cost of Living: ", Cost.of.Living,
+                                   '<br>', "Crime Rate: ", Crime.Rate,
+                                   '<br>', "Well Being: ", Community.Well.being,
+                                   '<br>', "Health Care: ", Health.Care,
+                                   '<br>', "Tax Rate: ", Tax.Rate,
+                                   '<br>', "Weather: ", Weather))
 # Make state borders black
 borders <- list(color = toRGB("black"), width=2)
 # Set up some mapping options
-map_options <- list(
-  scope = 'usa',
-  projection = list(type = 'albers usa'),
-  showlakes = TRUE,
-  lakecolor = toRGB('black')
-)
+map_options <- list(scope = 'usa', 
+                    projection = list(type = 'albers usa'),
+                    showlakes = TRUE,
+                    lakecolor = toRGB('black')
+                    )
 ```
+* We set parameters for the Choropleth map, and assembled information to be displayed whenever the mouse hovers over a state; may need to zoom the map to see it all.
 
-## Test Slide Three with Plot
 
-```{r plotData}
-plotly::plot_ly(state_pop, z = state_pop$Pop, text = state_pop$hover, locations = state_pop$State, type = 'choropleth', locationmode = 'USA-states', color = state_pop$Pop, colors = 'Blues', marker = list(line = borders)) %>%
-  colorbar(title = "Population") %>%
-  layout(title = 'US Population in 1975<br>(Hover for Details)', geo = map_options)
+## First to Worst Retirement Friendly States
+
+```{r plotData, echo=FALSE}
+plotly::plot_ly(brData, 
+                z = brData$Overall.Rank, 
+                text = brData$hover, 
+                locations = brData$State, 
+                type = 'choropleth', 
+                locationmode = 'USA-states', 
+                color = brData$Overall.Rank, 
+                colors = 'Reds', 
+                marker = list(line = borders)) %>%
+  colorbar(title = "Retiree<br>Hostility") %>%
+  layout(title = 'Best States to Retire<br>(Hover for Details)', 
+         geo = map_options)
 ```
 
 
